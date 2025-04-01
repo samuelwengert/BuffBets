@@ -1,0 +1,16 @@
+.bg-black {
+    background-color: black !important;
+}
+
+.text-gold {
+    color: gold !important;
+    font-size: 18px;
+}
+
+.navbar-toggler {
+    border: none;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #ffd700 !important; /* Brighter gold on hover */
+}
