@@ -86,6 +86,10 @@ app.get('/login', (req, res) => {
     //TODO RENDER THE LOGIN PAGE
     res.render('pages/login')
 })
+app.get('/home', (req, res) => {
+  //TODO RENDER THE LOGIN PAGE
+  res.render('pages/home')
+})
 
 app.get('/register', (req, res) => {
     //TODO RENDER THE REGISTRATION PAGE
