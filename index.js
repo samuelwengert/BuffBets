@@ -172,6 +172,29 @@ app.get('/logout', (req, res) => {
   });
 });
 
+//ALL ODDS - API ENDPOINTS BELOW
+const api_key = process.env.API_KEY
+
+app.get('/odds', (req, res)=> {
+  axios({
+    method: 'get',
+    url: "https://api.the-odds-api.com/v4/sports/upcoming/odds",
+    params: {
+      apiKey: api_key,
+      regions: 'us',
+    }
+  })
+  .then(response => {
+    console.log(JSON.stringify(response.data))
+
+    // Check your usage
+    console.log('Remaining requests',response.headers['x-requests-remaining'])
+    console.log('Used requests',response.headers['x-requests-used'])
+  })
+  .catch(error => {
+    console.log(error.response.data)
+  })
+});
 
 
 
