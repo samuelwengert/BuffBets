@@ -12,6 +12,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
 const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
+const api_key = process.env.API_KEY
 
 // *****************************************************
 // <!-- Section 2 : Connect to DB -->
@@ -90,9 +91,48 @@ app.get('/login', (req, res) => {
     //TODO RENDER THE LOGIN PAGE
     res.render('pages/login')
 })
-app.get('/home', (req, res) => {
-  //TODO RENDER THE LOGIN PAGE
-  res.render('pages/home')
+app.get('/home', async (req, res) => {
+  try {
+    const response = await axios({
+      method: 'get',
+      url: "https://api.the-odds-api.com/v4/sports/upcoming/odds",
+      params: {
+        apiKey: api_key,
+        regions: 'us',
+        oddsFormat: 'american'
+      }
+    });
+    const events = response.data
+    .filter(event => {
+      return (
+        event.bookmakers.length > 0 &&
+        event.bookmakers[0].markets?.length > 0 &&
+        event.bookmakers[0].markets[0].outcomes?.length > 0
+      );
+    })
+    .map(event => {
+      const bookmaker = event.bookmakers[0];
+      const moneyline = bookmaker?.markets.find(market => market.key === "h2h");
+      return {
+        id: event.id,
+        sport: event.sport_key,
+        date: event.commence_time,
+        home_team: event.home_team,
+        away_team: event.away_team,
+        odds: moneyline?.outcomes?.map(outcome => ({
+          team: outcome.name,
+          moneyline: outcome.price
+        })) || []
+      };
+    });
+    console.log('Remaining requests',response.headers['x-requests-remaining'])
+    console.log('Used requests',response.headers['x-requests-used'])
+    res.render('pages/home', {
+      events: events,
+    })
+  } catch (error) {
+    console.error(error);
+  }
 })
 
 app.get('/register', (req, res) => {
@@ -180,50 +220,7 @@ app.get('/logout', (req, res) => {
   });
 });
 
-//ALL ODDS - API ENDPOINTS BELOW
-const api_key = process.env.API_KEY
 
-app.get('/odds', async (req, res)=> {
-  try {
-    const response = await axios({
-      method: 'get',
-      url: "https://api.the-odds-api.com/v4/sports/upcoming/odds",
-      params: {
-        apiKey: api_key,
-        regions: 'us',
-        oddsFormat: 'american'
-      }
-    });
-    const events = response.data
-    .filter(event => {
-      return (
-        event.bookmakers.length > 0 &&
-        event.bookmakers[0].markets?.length > 0 &&
-        event.bookmakers[0].markets[0].outcomes?.length > 0
-      );
-    })
-    .map(event => {
-      const bookmaker = event.bookmakers[0];
-      const moneyline = bookmaker?.markets.find(market => market.key === "h2h");
-      return {
-        id: event.id,
-        sport: event.sport_key,
-        date: event.commence_time,
-        home_team: event.home_team,
-        away_team: event.away_team,
-        odds: moneyline?.outcomes?.map(outcome => ({
-          team: outcome.name,
-          moneyline: outcome.price
-        })) || []
-      };
-    });
-    console.log(events[0].odds)
-    console.log('Remaining requests',response.headers['x-requests-remaining'])
-    console.log('Used requests',response.headers['x-requests-used'])
-  } catch (error) {
-    console.error(error);
-  }
-});
 
 
 
@@ -231,5 +228,5 @@ app.get('/odds', async (req, res)=> {
 // <!-- Section 5 : Start Server-->
 // *****************************************************
 // starting the server and keeping the connection open to listen for more requests
-module.exports = app.listen(3000);app.listen(3000);
+module.exports = app.listen(3000);
 console.log('Server is listening on port 3000');
