@@ -113,10 +113,20 @@ app.get('/home', async (req, res) => {
     .map(event => {
       const bookmaker = event.bookmakers[0];
       const moneyline = bookmaker?.markets.find(market => market.key === "h2h");
+      const date = new Date(event.commence_time);
+      const date_string = date.toLocaleString("en-US", {
+        timeZone: "America/Denver",
+        hour12: true,            
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+      });
       return {
         id: event.id,
         sport: event.sport_key,
-        date: event.commence_time,
+        date: date_string,
         home_team: event.home_team,
         away_team: event.away_team,
         odds: moneyline?.outcomes?.map(outcome => ({
