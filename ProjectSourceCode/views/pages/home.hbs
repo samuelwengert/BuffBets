@@ -42,8 +42,12 @@
             <div class="card">
                 <h3>{{date}}</h3>
                 <p>{{home_team}} vs {{away_team}}</p>
+                
                 {{!-- <p>{{odds[0].team}}: {{odds[0].moneyline}}</p>
                 <p>{{odds[1].team}}: {{odds[1].moneyline}}</p>                 --}}
+                {{#each odds}}
+                    <p>{{team}}: {{moneyline}}</p>
+                {{/each}}
             </div>
         {{/each}}
     </div>
