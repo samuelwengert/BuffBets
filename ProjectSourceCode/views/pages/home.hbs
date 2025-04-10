@@ -38,56 +38,18 @@
 <body>
     <div class="container">
         <h2>Upcoming Games</h2>
-        <div class="card">
-            <h3>April 5, 2025</h3>
-            <p>Team A vs Team B</p>
-            <p>Odds: 1.5 - 2.8</p>
-        </div>
-        <div class="card">
-            <h3>April 6, 2025</h3>
-            <p>Team C vs Team D</p>
-            <p>Odds: 1.9 - 2.3</p>
-        </div>
-        <div class="card">
-            <h3>April 7, 2025</h3>
-            <p>Team E vs Team F</p>
-            <p>Odds: 2.0 - 2.5</p>
-        </div>
-        <div class="card">
-            <h3>April 8, 2025</h3>
-            <p>Team G vs Team H</p>
-            <p>Odds: 1.6 - 3.0</p>
-        </div>
-        <div class="card">
-            <h3>April 9, 2025</h3>
-            <p>Team I vs Team J</p>
-            <p>Odds: 1.8 - 2.7</p>
-        </div>
-        <div class="card">
-            <h3>April 10, 2025</h3>
-            <p>Team K vs Team L</p>
-            <p>Odds: 2.2 - 2.1</p>
-        </div>
-        <div class="card">
-            <h3>April 11, 2025</h3>
-            <p>Team M vs Team N</p>
-            <p>Odds: 1.4 - 3.2</p>
-        </div>
-        <div class="card">
-            <h3>April 12, 2025</h3>
-            <p>Team O vs Team P</p>
-            <p>Odds: 1.7 - 2.9</p>
-        </div>
-        <div class="card">
-            <h3>April 13, 2025</h3>
-            <p>Team Q vs Team R</p>
-            <p>Odds: 2.3 - 2.0</p>
-        </div>
-        <div class="card">
-            <h3>April 14, 2025</h3>
-            <p>Team S vs Team T</p>
-            <p>Odds: 1.5 - 3.1</p>
-        </div>
+        {{#each events}}
+            <div class="card">
+                <h3>{{date}}</h3>
+                <p>{{home_team}} vs {{away_team}}</p>
+                
+                {{!-- <p>{{odds[0].team}}: {{odds[0].moneyline}}</p>
+                <p>{{odds[1].team}}: {{odds[1].moneyline}}</p>                 --}}
+                {{#each odds}}
+                    <p>{{team}}: {{moneyline}}</p>
+                {{/each}}
+            </div>
+        {{/each}}
     </div>
 </body>
 </html>
