@@ -221,7 +221,7 @@ function isAuthenticated(req, res, next) {
 
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
-      res.render('pages/login'); // Render the logout page without redirecting
+      res.render('pages/logout'); // Render the logout page without redirecting
   });
 });
 
