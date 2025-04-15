@@ -225,10 +225,52 @@ app.get('/logout', (req, res) => {
   });
 });
 
-app.get('/profile', isAuthenticated,(req, res) => {
-  req.session.destroy(() => {
-      res.render('pages/profile'); // Render the logout page without redirecting
-  });
+app.get('/profile', isAuthenticated, async (req, res) => {
+  const username = req.session.user.username;
+
+  try {
+    // Get balance
+    const { balance } = await db.one(
+      'SELECT Balance FROM Users WHERE Username = $1',
+      [username]
+    );
+
+    // Get total wins
+    const { count: totalWins } = await db.one(
+      `SELECT COUNT(*) FROM UserBetHistory WHERE Username = $1 AND WinLose = TRUE`,
+      [username]
+    );
+
+    // Get past bets
+    const bets = await db.any(
+      `SELECT 
+         Event,
+         Amount,
+         WinLose,
+         Time
+       FROM UserBetHistory
+       WHERE Username = $1
+       ORDER BY Time DESC`,
+      [username]
+    );
+
+    // Format dates (or format in Handlebars with helper)
+    const formattedBets = bets.map(b => ({
+      ...b,
+      time: new Date(b.time).toLocaleDateString("en-US"),
+      result: b.winlose
+    }));
+
+    res.render('pages/profile', {
+      username,
+      balance,
+      totalWins,
+      bets: formattedBets
+    });
+  } catch (err) {
+    console.error('Error loading profile:', err);
+    res.status(500).send("Profile could not be loaded.");
+  }
 });
 
 
