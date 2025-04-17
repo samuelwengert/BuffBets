@@ -24,11 +24,16 @@
         </ul>
         <div class="nav-item mx-3" id="auth-link">
           {{#if user}}
-            <a class="nav-link text-black" href="/logout">Logout</a>
+            <a class="nav-link text-black d-flex align-items-center" href="/logout">
+            <span class="me-1">🦬</span> Logout
+            </a>
           {{else}}
-            <a class="nav-link text-black" href="/login">Login</a>
+            <a class="nav-link text-black d-flex align-items-center" href="/login">
+            <span class="me-1">🦬</span> Login
+            </a>
           {{/if}}
         </div>
+
       </div>
     </div>
   </nav>

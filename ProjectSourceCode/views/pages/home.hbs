@@ -63,7 +63,9 @@
     </style>
 </head>
 <body>
-    <h2 style="margin-top: 50px;">Upcoming Games</h2>
+    <body data-balance="{{balance}}">
+
+    <h2 style="margin-top: 50px;">🦬Upcoming Games🦬</h2>
 
     <div class="container">
         {{#each events}}
@@ -77,7 +79,7 @@
                 </div>
 
                 {{#if ../isLoggenIn}}
-                <button onclick="toggleForm(this)">Place Bet</button>
+                <button onclick="toggleForm(this)">Place Bet 🦬</button>
 
                 <form class="bet-form">
                     <select name="team" required>
@@ -107,10 +109,41 @@
     </div>
 
     <script>
-        function toggleForm(button) {
-            const form = button.nextElementSibling;
-            form.style.display = form.style.display === 'block' ? 'none' : 'block';
-        }
-    </script>
+    function toggleForm(button) {
+        const form = button.nextElementSibling;
+        form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const betForms = document.querySelectorAll(".bet-form");
+
+        betForms.forEach(form => {
+            form.addEventListener("submit", function(e) {
+                e.preventDefault();
+
+                const amountInput = this.querySelector('input[name="amount"]');
+                const teamSelect = this.querySelector('select[name="team"]');
+                const amount = parseFloat(amountInput.value);
+                const balance = parseFloat(document.body.dataset.balance); // see below
+              
+                if (isNaN(amount) || amount <= 0) {
+                    alert("Please enter a valid bet amount.");
+                    return;
+                }
+
+                if (amount > balance) {
+                    alert("Insufficient balance to place this bet.");
+                    return;
+                }
+
+                alert("Bet placed! (Simulated)");
+                // Optionally reset form or visually confirm
+                this.reset();
+                this.style.display = 'none';
+            });
+        });
+    });
+</script>
+
 </body>
 </html>

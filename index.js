@@ -142,10 +142,13 @@ app.get('/home', async (req, res) => {
     });
     console.log('Remaining requests',response.headers['x-requests-remaining'])
     console.log('Used requests',response.headers['x-requests-used'])
+    const balance = req.session.user ? (await db.one('SELECT Balance FROM Users WHERE Username = $1', [req.session.user.username])).balance : 0;
     res.render('pages/home', {
       events: events,
       isLoggenIn: req.session.user !== undefined,
+      balance: balance
     })
+
   } catch (error) {
     console.error(error);
   }
