@@ -82,7 +82,7 @@
                 {{#if ../isLoggenIn}}
                 <button onclick="toggleForm(this)">Place Bet 🦬</button>
 
-                <form class="bet-form">
+                <form class="bet-form" action="/bets" method="POST">
                     <select name="team" required>
                         <option value="" disabled selected>Select Team</option>
                         {{#each odds}}
@@ -120,30 +120,34 @@
 
         betForms.forEach(form => {
             form.addEventListener("submit", function(e) {
-                e.preventDefault();
-
+                
                 const amountInput = this.querySelector('input[name="amount"]');
                 const teamSelect = this.querySelector('select[name="team"]');
                 const amount = parseFloat(amountInput.value);
                 const balance = parseFloat(document.body.dataset.balance); // see below
-              
-                if (isNaN(amount) || amount <= 0) {
-                    alert("Please enter a valid bet amount.");
-                    return;
-                }
 
-                if (amount > balance) {
-                    alert("Insufficient balance to place this bet.");
-                    return;
-                }
-
-                alert("Bet placed! (Simulated)");
-                // Optionally reset form or visually confirm
-                this.reset();
-                this.style.display = 'none';
+                if(!betValidate(amount, balance)) e.preventDefault(); return;
+        
+                // this.reset();
+                //this.style.display = 'none';
             });
         });
     });
+
+    function betValidate(amount, balance)
+    {
+        if (isNaN(amount) || amount <= 0) {
+            alert("Please enter a valid bet amount.");
+            return 0;
+        }
+
+        if (amount > balance) {
+            alert("Insufficient balance to place this bet.");
+            return 0;
+        }
+        alert("Bet placed! (Simulated)"); //I left this in but we can take it out, this just helps us to know for now
+        return 1;
+    }
 </script>
 
 </body>

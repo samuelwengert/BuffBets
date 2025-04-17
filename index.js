@@ -176,9 +176,10 @@ app.post('/register', async (req, res) => {
 
       else{
         const hashedPassword = await bcrypt.hash(password, 10);
-        const insertQuery = 'INSERT INTO Users(Username, Password) VALUES ($1, $2) RETURNING *;';
+        const insertQuery = 'INSERT INTO Users(Username, Password, Balance) VALUES ($1, $2, 500) RETURNING *;';
 
         await db.one(insertQuery, [username, hashedPassword]);
+        
 
         // Redirect to login after successful registration
         res.redirect('/login');
@@ -227,6 +228,30 @@ app.get('/logout', (req, res) => {
       res.render('pages/logout'); // Render the logout page without redirecting
   });
 });
+
+// -- Bets Routes --
+app.post('/bets', isAuthenticated, async (req, res) => {
+  const { eventId, amount, betType, betDetail } = req.body;
+  const userId = req.session.user.userid;
+
+  try {
+    
+    await db.none(
+      `INSERT INTO Bets (UserID, EventID, Amount, BetType, BetDetail) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, eventId, amount, betType, betDetail]
+    );
+
+    await db.none('UPDATE Users SET Balance = Balance - $1 WHERE UserID = $2', [amount, userId]);
+    await db.none('INSERT INTO Transactions (UserID, Amount, Type) VALUES ($1, $2, \'bet\')', [userId, -amount]);
+
+    res.redirect('/profile');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal error placing bet.");
+  }
+});
+
 
 app.get('/profile', isAuthenticated, async (req, res) => {
   const username = req.session.user.username;
