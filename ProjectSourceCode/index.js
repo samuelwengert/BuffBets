@@ -228,6 +228,31 @@ app.get('/logout', (req, res) => {
   });
 });
 
+
+// -- Bets Routes --
+app.post('/bets', isAuthenticated, async (req, res) => {
+  const { eventId, amount, betType, betDetail } = req.body;
+  const userId = req.session.user.userid;
+
+  try {
+    
+    await db.none(
+      `INSERT INTO Bets (UserID, EventID, Amount, BetType, BetDetail) 
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, eventId, amount, betType, betDetail]
+    );
+
+    await db.none('UPDATE Users SET Balance = Balance - $1 WHERE UserID = $2', [amount, userId]);
+    await db.none('INSERT INTO Transactions (UserID, Amount, Type) VALUES ($1, $2, \'bet\')', [userId, -amount]);
+
+    res.redirect('/profile');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Internal error placing bet.");
+  }
+});
+
+
 app.get('/profile', isAuthenticated, async (req, res) => {
   const username = req.session.user.username;
 
