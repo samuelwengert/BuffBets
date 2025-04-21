@@ -1,10 +1,3 @@
-DROP TABLE IF EXISTS Transactions;
-DROP TABLE IF EXISTS Friendships;
-DROP TABLE IF EXISTS Bets;
-DROP TABLE IF EXISTS Events;
-DROP TABLE IF EXISTS Users;
-
-
 -- Users Table
 CREATE TABLE Users (
     UserID SERIAL PRIMARY KEY,
@@ -14,28 +7,31 @@ CREATE TABLE Users (
 );
 
 -- Events Table
-CREATE TABLE Events (
-    EventID SERIAL PRIMARY KEY,
-    Sport VARCHAR(50),
-    Description TEXT,
-    Time TIMESTAMP,
-    Team1 VARCHAR(100),
-    Team2 VARCHAR(100),
-    Team1Odds INT,              -- ex. -150
-    Team2Odds INT,              -- ex. +180
-    OverUnderLine DECIMAL(4,1), -- ex. 47.5
-    TotalBets INT DEFAULT 0,
-    WinLose BOOLEAN             -- NULL until result is known
-);
+-- CREATE TABLE Events (
+--     EventID SERIAL PRIMARY KEY,
+--     Sport VARCHAR(50),
+--     Description TEXT,
+--     Time TIMESTAMP,
+--     Team1 VARCHAR(100),
+--     Team2 VARCHAR(100),
+--     Team1Odds INT,              -- ex. -150
+--     Team2Odds INT,              -- ex. +180
+--     OverUnderLine DECIMAL(4,1), -- ex. 47.5
+--     TotalBets INT DEFAULT 0,
+--     WinLose BOOLEAN             -- NULL until result is known
+-- );
 
 -- Bets Table
 CREATE TABLE Bets (
     BetID SERIAL PRIMARY KEY,
     UserID INT REFERENCES Users(UserID) ON DELETE CASCADE,
-    EventID INT REFERENCES Events(EventID) ON DELETE CASCADE,
+    EventID VARCHAR(200),
     Amount INT NOT NULL,
+    Sport VARCHAR(100),
     BetType VARCHAR(20) CHECK (BetType IN ('Moneyline', 'Over/Under')),
-    BetDetail VARCHAR(100), -- ex. 'CU -150', 'Over', 'Under'
+    BetDetail VARCHAR(100), -- this is the team that the user bet on
+    BetLine INT, -- ex 100, -250
+    Payout INT DEFAULT 0,
     WinLose BOOLEAN
 );
 
@@ -60,14 +56,15 @@ CREATE TABLE Transactions (
 CREATE VIEW UserBetHistory AS
 SELECT 
     B.BetID,
+    B.EventID,
+    U.UserID,
     U.Username AS Username,
-    E.Description AS Event,
-    E.Sport,
+    B.Sport,
     B.BetType,
     B.BetDetail,
     B.Amount,
-    B.WinLose,
-    E.Time
+    B.BetLine,
+    B.Payout,
+    B.WinLose
 FROM Bets B
-JOIN Users U ON B.UserID = U.UserID
-JOIN Events E ON B.EventID = E.EventID;
+JOIN Users U ON B.UserID = U.UserID;

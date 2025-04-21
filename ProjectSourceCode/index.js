@@ -20,16 +20,17 @@ const api_key = process.env.API_KEY
 
 // create `ExpressHandlebars` instance and configure the layouts and partials dir.
 const hbs = handlebars.create({
-    extname: 'hbs',
-    layoutsDir: path.join(__dirname, 'views', 'layouts'),
-    partialsDir: path.join(__dirname, 'views', 'partials'),
+  extname: 'hbs',
+  layoutsDir: path.join(__dirname, 'views', 'layouts'),
+  partialsDir: path.join(__dirname, 'views', 'partials'),
 });
+
   
 
 
 // database configuration
 const dbConfig = {
-  host: process.env.POSTGRES_HOST || 'db', // the database server
+  host: 'db', // the database server
   port: 5432, // the database port
   database: process.env.POSTGRES_DB, // the database name
   user: process.env.POSTGRES_USER, // the user account to connect with
@@ -107,12 +108,14 @@ app.get('/home', async (req, res) => {
         oddsFormat: 'american'
       }
     });
+    invalid_sports = ["baseball_ncaa"];
     const events = response.data
     .filter(event => {
       return (
         event.bookmakers.length > 0 &&
         event.bookmakers[0].markets?.length > 0 &&
-        event.bookmakers[0].markets[0].outcomes?.length > 0
+        event.bookmakers[0].markets[0].outcomes?.length > 0 &&
+        !invalid_sports.includes(event.sport_key)
       );
     })
     .map(event => {
@@ -176,9 +179,10 @@ app.post('/register', async (req, res) => {
 
       else{
         const hashedPassword = await bcrypt.hash(password, 10);
-        const insertQuery = 'INSERT INTO Users(Username, Password) VALUES ($1, $2) RETURNING *;';
+        const insertQuery = 'INSERT INTO Users(Username, Password, Balance) VALUES ($1, $2, 500) RETURNING *;';
 
         await db.one(insertQuery, [username, hashedPassword]);
+        
 
         // Redirect to login after successful registration
         res.redirect('/login');
@@ -228,18 +232,18 @@ app.get('/logout', (req, res) => {
   });
 });
 
-
 // -- Bets Routes --
 app.post('/bets', isAuthenticated, async (req, res) => {
-  const { eventId, amount, betType, betDetail } = req.body;
+  const { eventId, amount, sport, betType, betDetail, betLine } = req.body;
   const userId = req.session.user.userid;
-
+  console.log("Bet Line: ",betLine);
+  const int_betLine = parseInt(betLine, 10);
   try {
     
     await db.none(
-      `INSERT INTO Bets (UserID, EventID, Amount, BetType, BetDetail) 
-       VALUES ($1, $2, $3, $4, $5)`,
-      [userId, eventId, amount, betType, betDetail]
+      `INSERT INTO Bets (UserID, EventID, Amount, Sport, BetType, BetDetail, BetLine) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [userId, eventId, amount, sport, betType, betDetail, int_betLine]
     );
 
     await db.none('UPDATE Users SET Balance = Balance - $1 WHERE UserID = $2', [amount, userId]);
@@ -254,50 +258,149 @@ app.post('/bets', isAuthenticated, async (req, res) => {
 
 
 app.get('/profile', isAuthenticated, async (req, res) => {
-  const username = req.session.user.username;
-
+  //API logic and settling bets
+  const userId = req.session.user.userid;
   try {
-    // Get balance
+    //api logic and settling bets
+    const unsettledBets = await db.any(
+      `SELECT * FROM UserBetHistory 
+       WHERE UserID = $1 AND WinLose IS NULL`,
+      [userId]
+    );
+    const uniqueSports = [...new Set(unsettledBets.map(bet => bet.sport).filter(Boolean))];
+    console.log(uniqueSports);
+    const all_scores = [];
+    for (const sport of uniqueSports) {
+      const eventIDs = unsettledBets
+      .filter(bet => bet.sport === sport)
+      .map(bet => bet.eventid)
+      .join(',');
+      
+      console.log(`---`);
+      console.log(`SPORT: ${sport}`);
+      console.log(`EVENT IDs: ${eventIDs}`);
+
+      if (!eventIDs || !sport) {
+        console.warn("Skipping empty sport or eventIDs");
+        continue;
+      }
+
+      try {
+        const response = await axios({
+          method: 'get',
+          url: `https://api.the-odds-api.com/v4/sports/${sport}/scores`,
+          params: {
+            apiKey: api_key,
+            daysFrom: 3,
+            eventIds: eventIDs
+          }
+        });
+        if (response.status === 200) {
+          console.log('Scores:', JSON.stringify(response.data, null, 2));
+        } else {
+          console.log('No scores returned or events not completed.');
+        }
+        console.log('Remaining requests',response.headers['x-requests-remaining']);
+        console.log('Used requests',response.headers['x-requests-used']);
+        console.log(`API response for ${sport}:`, response.data);
+        all_scores.push(...response.data);
+      } catch (err) {
+        console.error(`API call failed for sport: ${sport}, eventIds: ${eventIDs}`);
+        console.error(err.response?.data || err.message);
+      }
+    }
+
+    for (const bet of unsettledBets) {
+      const match = all_scores.find(score => score.id === bet.eventid);
+      if (!match || !match.completed || !match.scores || match.scores.length === 0) {
+        console.log("continuing from ",bet.eventid)
+        continue;
+      }
+      const bet_team = match.scores.find(team => team.name === bet.betdetail);
+      if (!bet_team) {
+        console.warn(`Could not find team ${bet.betdetail} in scores for eventID: ${bet.eventid}`);
+        continue;
+      }
+      const didWin = match.scores
+      .filter(team => team.name !== bet.betdetail)
+      .every(opponent => bet_team.score > opponent.score);
+
+      await db.none(
+        `UPDATE Bets SET WinLose = $1 WHERE UserID = $2 AND EventID = $3 AND BetDetail= $4`,
+        [didWin, userId, bet.eventid, bet.betdetail]
+      );
+
+
+      //win or loss database update
+      if (didWin) {
+        const line = bet.betline;
+        let payout = 0;
+        const wager = bet.amount;
+        if (line > 0) {
+          //positive line (ex. +150)
+          payout = wager + (wager * (line / 100));
+        } else {
+          //negative line (ex. -100)
+          payout = wager + (wager * (100 / Math.abs(line)));
+        }
+
+        await db.none(
+          `UPDATE Users SET Balance = Balance + $1 WHERE UserID = $2`,
+          [payout, userId]
+        );
+        await db.none(
+          `UPDATE Bets SET Payout = $1 WHERE UserID = $2 AND EventID = $3 AND BetDetail = $4`,
+          [payout, userId, bet.eventid, bet_team.name]
+        );
+        await db.none(
+          `INSERT INTO Transactions (UserID, Amount, Type) 
+          VALUES ($1, $2, \'win\')`, 
+          [userId, payout]);
+        //probably need a transactions insert here
+      } 
+    } 
+
+    // -- Get current balance --
     const { balance } = await db.one(
-      'SELECT Balance FROM Users WHERE Username = $1',
-      [username]
+      'SELECT Balance FROM Users WHERE UserID = $1',
+      [userId]
     );
 
-    // Get total wins
-    const { count: totalWins } = await db.one(
-      `SELECT COUNT(*) FROM UserBetHistory WHERE Username = $1 AND WinLose = TRUE`,
-      [username]
+    // -- Count won bets --
+    const { count: wonCount } = await db.one(
+      `SELECT COUNT(*) FROM Bets WHERE UserID = $1 AND WinLose = true`,
+      [userId]
     );
 
-    // Get past bets
-    const bets = await db.any(
-      `SELECT 
-         Event,
-         Amount,
-         WinLose,
-         Time
-       FROM UserBetHistory
-       WHERE Username = $1
-       ORDER BY Time DESC`,
-      [username]
+    // -- Get past bets --
+    const settledBets = await db.any(
+      `SELECT BetDetail, Amount, WinLose, Payout
+       FROM UserBetHistory 
+       WHERE UserID = $1
+       AND WinLose IS NOT NULL`,
+      [userId]
     );
-
-    // Format dates (or format in Handlebars with helper)
-    const formattedBets = bets.map(b => ({
-      ...b,
-      time: new Date(b.time).toLocaleDateString("en-US"),
-      result: b.winlose
-    }));
-
+    const ongoingBets = await db.any(
+      `SELECT BetDetail, Amount, WinLose, BetLine
+      FROM UserBetHistory
+      WHERE UserID = $1
+      AND WinLose IS NULL`,
+      [userId]
+    );
+    console.log("unsettled bets: ",unsettledBets);
+    console.log("settledBets: ",settledBets);
+    console.log("ongoingBets: ",ongoingBets);
     res.render('pages/profile', {
-      username,
       balance,
-      totalWins,
-      bets: formattedBets
+      wonCount,
+      settledBets,
+      ongoingBets
     });
+    
+
   } catch (err) {
     console.error('Error loading profile:', err);
-    res.status(500).send("Profile could not be loaded.");
+    res.status(500).send('Error loading profile.');
   }
 });
 
