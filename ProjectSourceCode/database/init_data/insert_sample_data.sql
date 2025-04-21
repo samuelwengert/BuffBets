@@ -6,9 +6,9 @@ INSERT INTO Users (Username, Password, Balance) VALUES
 ('Sam@buffbets.com', '2222', 600);
 
 -- Sample Events
-INSERT INTO Events (Sport, Description, Time, Team1, Team2, Team1Odds, Team2Odds, OverUnderLine, TotalBets, WinLose) VALUES
-('Football', 'CU vs CSU - Rivalry game!', '2025-04-05 18:00:00', 'CU', 'CSU', -150, +180, 47.5, 2, true),
-('Basketball', 'Nuggets vs Lakers - Playoffs', '2025-04-07 20:30:00', 'Nuggets', 'Lakers', -110, +140, 222.5, 3, false);
+-- INSERT INTO Events (Sport, Description, Time, Team1, Team2, Team1Odds, Team2Odds, OverUnderLine, TotalBets, WinLose) VALUES
+-- ('Football', 'CU vs CSU - Rivalry game!', '2025-04-05 18:00:00', 'CU', 'CSU', -150, +180, 47.5, 2, true),
+-- ('Basketball', 'Nuggets vs Lakers - Playoffs', '2025-04-07 20:30:00', 'Nuggets', 'Lakers', -110, +140, 222.5, 3, false);
 
 -- Sample Bets (Moneyline and Over/Under)
 INSERT INTO Bets (UserID, EventID, Amount, BetType, BetDetail, WinLose) VALUES

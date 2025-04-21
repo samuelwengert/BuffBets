@@ -82,13 +82,17 @@
                 <button onclick="toggleForm(this)">Place Bet 🦬</button>
 
                 <form class="bet-form" action="/bets" method="POST">
-                    <select name="team" required>
+                    <select name="betDetail" required onchange="updateOdds(this)">
                         <option value="" disabled selected>Select Team</option>
                         {{#each odds}}
-                            <option value="{{team}}">{{team}}</option>
+                            <option data-odds="{{moneyline}}" value="{{team}}">{{team}}</option>
                         {{/each}}
                     </select>
+                    <input type="hidden" name="eventId" value="{{id}}">
                     <input type="number" name="amount" placeholder="Bet Amount ($)" required min="1">
+                    <input type="hidden" name="sport" value="{{sport}}">
+                    <input type="hidden" name="betType" value="Moneyline"> 
+                    <input type="hidden" name="betLine">                 
                     <button type="submit">Submit</button>
                 </form>
                 {{else}}
@@ -146,6 +150,16 @@
         }
         alert("Bet placed! (Simulated)"); //I left this in but we can take it out, this just helps us to know for now
         return 1;
+    }
+
+    function updateOdds(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const odds = selectedOption.getAttribute("data-odds");
+        const form = selectElement.closest("form");
+        const oddsInput = form.querySelector('input[name="betLine"]');
+        if (oddsInput) {
+            oddsInput.value = odds;
+        }
     }
 </script>
 

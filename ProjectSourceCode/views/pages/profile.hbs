@@ -82,43 +82,62 @@
 
         <div class="top-info">
             <div class="account-balance">Account Balance: ${{balance}}</div>
-            <div class="won-bets">Total Bets Won: {{totalWins}}</div>
+            <div class="won-bets">Total Bets Won: {{wonCount}}</div>
         </div>
 
-        <h2>Past Bets</h2>
-        {{#if bets.length}}
+        <h2>Settled Bets</h2>
+        {{#if settledBets.length}}
         <table>
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Event</th>
+                    {{!-- <th>Date</th> --}}
+                    <th>Bet Team</th>
                     <th>Wager</th>
                     <th>Result</th>
                     <th>Payout</th>
                 </tr>
             </thead>
             <tbody>
-                {{#each bets}}
+                {{#each settledBets}}
                 <tr>
-                    <td>{{this.time}}</td>
-                    <td>{{this.event}}</td>
-                    <td>${{this.amount}}</td>
-                    <td class="{{#if this.result}}win{{else}}loss{{/if}}">
-                        {{#if this.result}}Win{{else}}Loss{{/if}}
+                    {{!-- <td>{{this.time}}</td> --}}
+                    <td>{{betdetail}}</td>
+                    <td>${{amount}}</td>
+                    <td class="{{#if winlose}}win{{else}}loss{{/if}}">
+                        {{#if winlose}}Win{{else}}Loss{{/if}}
                     </td>
-                    <td>
-                        {{#if this.result}}
-                            ${{this.amount}}
-                        {{else}}
-                            $0
-                        {{/if}}
-                    </td>
+                    <td>{{payout}}</td>
                 </tr>
                 {{/each}}
             </tbody>
         </table>
         {{else}}
-            <p style="text-align:center; color:#fff;">No bets yet.</p>
+          <p style="text-align:center; color:#fff;">No settled bets yet.</p>
+        {{/if}}
+        <h2>Ongoing Bets</h2>
+        {{#if ongoingBets.length}}
+        <table>
+            <thead>
+                <tr>
+                    {{!-- <th>Date</th> --}}
+                    <th>Bet team</th>
+                    <th>Wager</th>
+                    <th>Moneyline</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each ongoingBets}}
+                <tr>
+                    {{!-- <td>{{this.time}}</td> --}}
+                    <td>{{betdetail}}</td>
+                    <td>${{amount}}</td>
+                    <td>{{betline}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+        {{else}}
+            <p style="text-align:center; color:#fff;">No current bets.</p>
         {{/if}}
     </div>
 </body>
