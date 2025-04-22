@@ -90,7 +90,7 @@ app.get('/welcome', (req, res) => {
 
 // TODO - Include your API routes here
 app.get('/', (req, res) => {
-    res.send("Application is working!")
+    res.send("pages/login")
 })
 
 app.get('/login', (req, res) => {
@@ -108,7 +108,7 @@ app.get('/home', async (req, res) => {
         oddsFormat: 'american'
       }
     });
-    invalid_sports = ["baseball_ncaa"];
+    invalid_sports = ["baseball_ncaa", "icehockey_liiga", "cricket_psl"];
     const events = response.data
     .filter(event => {
       return (
@@ -361,8 +361,8 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     } 
 
     // -- Get current balance --
-    const { balance } = await db.one(
-      'SELECT Balance FROM Users WHERE UserID = $1',
+    const { balance, username } = await db.one(
+      'SELECT Balance, Username FROM Users WHERE UserID = $1',
       [userId]
     );
 
@@ -392,6 +392,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     console.log("ongoingBets: ",ongoingBets);
     res.render('pages/profile', {
       balance,
+      username,
       wonCount,
       settledBets,
       ongoingBets
