@@ -38,8 +38,6 @@ Docker desktop
 WSL
 with these two an integration between docker and wsl needs to happen in order to have your system work properly
 
-How to run the tests:
-//TO DO
 
 Link to the deployed application: http://localhost:3000/home
 
