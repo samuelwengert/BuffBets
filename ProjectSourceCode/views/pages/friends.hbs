@@ -117,13 +117,23 @@
         </form>
     </div>
 
-    <div class="container">
-        {{#each friends}}
-            <div class = "card">
-                <div>
-                    <h2>Blah!</h2>
-                </div>
-            </div>
-        {{/each}}
-    </div>
+    {{#if friends.length}}
+        <div class="container">
+            <h2>Friends</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Bets Won</th>
+                    </tr>
+                </thead>
+                {{#each friends}}
+                    <tr>
+                        <td>{{username}}</td>
+                        <td>{{win_count}}</td>
+                    </tr>
+                {{/each}}
+            </table>
+        </div>
+    {{/if}}
 </body>
