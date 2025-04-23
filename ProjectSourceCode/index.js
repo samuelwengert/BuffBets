@@ -230,15 +230,24 @@ function isAuthenticated(req, res, next) {
 app.get('/friends', async (req, res) => {
   //search for friends, then render the page and send friends info through
   userId = req.session.user.userId;
-  friendSearch = 'SELECT Username FROM Users INNER JOIN Friendships ON Users.UserID = Friendships.FriendID WHERE Friendships.UserID = $1 FOR JSON PATH;';
-  friendWinCount; //WE NEED TO IMPLEMENT WIN COUNT!! ASK SAMUEL IF THAT IS FINISHED!
-
+  
   try {
-    const {friendNames} = await db.manyOrNone(friendSearch, [userId]);
-    const nofriends = false;
-    if (friendNames.length() == 0) nofriends = true; 
+    //friend amount and friends
 
-    res.render('pages/friends', {friends: friendNames, nofriends: nofriends});
+    const friendsWithWins = await db.any(`
+      SELECT 
+        Users.UserID,
+        Users.Username,
+        COUNT(CASE WHEN Bets.WinLose = true THEN 1 END) AS win_count
+      FROM Friendships
+      JOIN Users ON Friendships.FriendID = Users.UserID
+      LEFT JOIN Bets ON Users.UserID = Bets.UserID
+      WHERE Friendships.UserID = $1
+      GROUP BY Users.UserID, Users.Username
+      ORDER BY win_count DESC
+    `, [userId]);
+
+    res.render('pages/friends', {friends: friendsWithWins.rows});
   }
   catch(err){
     console.error(err);
@@ -249,28 +258,35 @@ app.get('/friends', async (req, res) => {
 
 
 app.post('/add_friend', isAuthenticated, async (req, res) => {
-  const friend_username = req.body;
-  const searchQuery = 'SELECT Users.UserID FROM Users WHERE Users.Username = $1;';
+  const { username: friend_username } = req.body; // Destructure properly
+  const userId = req.session.user.userId;
 
+  
   try {
-    const friend_id = await db.any(searchQuery, [friend_username])
-
+      // 1. Find friend's UserID
+    const friend_id = await db.any(
+      'SELECT UserID FROM Users WHERE Username = $1', 
+      [friend_username]
+    );
+    
     if(friend_id.length == 0) {
       res.render('pages/friends', {message: "No user found"});
+      console.log('AHH HAHA! NO FRIENDS WITH THAT NAME!');
     }
     else{
       const duplicateQuery = 'SELECT * FROM Friendships WHERE UserID = $1 AND FriendID = $2;';
-      const duplicates = await db.any(duplicateQuery, [req.session.user.userId, friend_id]);
+      const duplicates = await db.any(duplicateQuery, [userId, friend_id]);
 
       if (duplicates.length > 0) {
         res.render('pages/friends', {message: "Friend already added!"});
       }
 
       const insertQuery = 'INSERT INTO Friendships (UserID, FriendID) VALUES ($1, $2);';
-      await db.none(insertQuery, [req.session.user.userId, friend_id]);
+      await db.none(insertQuery, [userId, friend_id]);
 
       //
-      res.redirect('/friends');
+      console.log('IT ALL WORKED!!');
+       return res.redirect('/friends');
     }
     
   } catch(err) {
