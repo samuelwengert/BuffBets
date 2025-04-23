@@ -24,16 +24,17 @@ Technology Stack:
 Tasks Management: GitHub Projects
 Front-End Dev: HTML/CSS, JS for UI. Use a CSS framework
 
+
 Back-End Dev:
 
 NodeJS and Express: Server and middleware for handling requests and responses.
 HandleBars: Server Side templating to render dynamic HTML
 API integration: Connect to external betting APIs for real time sports data. 
 
+
 Database and Deployment: 
 
 PostgreSQL:  Managed by Docker containers
-
 Docker Compose: Multi-container setup, including Node.JS server and PostgreSQL.
 
 
