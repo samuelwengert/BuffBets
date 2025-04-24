@@ -90,7 +90,7 @@ app.get('/welcome', (req, res) => {
 
 // TODO - Include your API routes here
 app.get('/', (req, res) => {
-    res.send("pages/login")
+    res.render("pages/login")
 })
 
 app.get('/login', (req, res) => {
