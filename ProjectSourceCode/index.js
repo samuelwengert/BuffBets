@@ -226,6 +226,84 @@ function isAuthenticated(req, res, next) {
   }
 }
 
+
+app.get('/friends', async (req, res) => {
+  //search for friends, then render the page and send friends info through
+  userId = req.session.user.userid;
+  
+  try {
+    //friend amount and friends
+
+    const friendsWithWins = await db.any(`
+      SELECT 
+        Users.UserID,
+        Users.Username,
+        COUNT(CASE WHEN Bets.WinLose = true THEN 1 END) AS win_count
+      FROM Friendships
+      JOIN Users ON Friendships.FriendID = Users.UserID
+      LEFT JOIN Bets ON Users.UserID = Bets.UserID
+      WHERE Friendships.UserID = $1
+      GROUP BY Users.UserID, Users.Username
+      ORDER BY win_count DESC
+    `, [userId]);
+
+    console.log("Friends with wins:", friendsWithWins);
+
+    res.render('pages/friends', {friends: friendsWithWins});
+  }
+  catch(err){
+    console.error(err);
+    res.render('pages/home', {message: 'Error loading friend list'});
+  }
+ 
+})
+
+
+app.post('/add_friend', isAuthenticated, async (req, res) => {
+  const { friend_username: friend_username } = req.body; // Destructure properly
+  const userId = req.session.user.userid;
+
+  console.log("req.body:", req.body);
+  console.log("friend_username:", friend_username);
+  console.log("userId:", userId);
+  
+  try {
+      // 1. Find friend's UserID
+    const result = await db.oneOrNone(
+      'SELECT UserID FROM Users WHERE Username = $1', 
+      [friend_username]
+    );
+    
+    if(!result) {
+      res.render('pages/friends', {message: "No user found"});
+      console.log('AHH HAHA! NO FRIENDS WITH THAT NAME!');
+      return;
+    }
+
+    const friend_id = result.userid;
+    
+    const duplicateQuery = 'SELECT * FROM Friendships WHERE UserID = $1 AND FriendID = $2;';
+    const duplicates = await db.any(duplicateQuery, [userId, friend_id]);
+
+    if (duplicates.length > 0) {
+      res.render('pages/friends', {message: "Friend already added!"});
+      console.log("Friend already added!")
+      return;
+    }
+
+    const insertQuery = 'INSERT INTO Friendships (UserID, FriendID) VALUES ($1, $2);';
+    await db.none(insertQuery, [userId, friend_id]);
+
+    //
+    console.log('IT ALL WORKED!!');
+    return res.redirect('/friends');
+
+  } catch(err) {
+    console.error(err);
+    res.render('pages/friends', {message: "User not found"})
+  }
+})
+
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
       res.render('pages/logout'); // Render the logout page without redirecting
