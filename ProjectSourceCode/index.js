@@ -108,7 +108,7 @@ app.get('/home', async (req, res) => {
         oddsFormat: 'american'
       }
     });
-    invalid_sports = ["baseball_ncaa", "icehockey_liiga", "cricket_psl"];
+    invalid_sports = ["baseball_ncaa", "icehockey_liiga", "cricket_psl", "soccer_conmebol_copa_sudamericana"];
     const events = response.data
     .filter(event => {
       return (
