@@ -30,12 +30,14 @@ const hbs = handlebars.create({
 
 // database configuration
 const dbConfig = {
-  host: 'db', // the database server
+  host: 'db' ||process.env.Hostname, // the database server
   port: 5432, // the database port
   database: process.env.POSTGRES_DB, // the database name
   user: process.env.POSTGRES_USER, // the user account to connect with
   password: process.env.POSTGRES_PASSWORD, // the password of the user account
 };
+
+
 
 const db = pgp(dbConfig);
 
@@ -313,13 +315,30 @@ app.get('/logout', (req, res) => {
 // -- Bets Routes --
 app.post('/bets', isAuthenticated, async (req, res) => {
   const { eventId, amount, sport, betType, betDetail, betLine } = req.body;
-  const userId = req.session.user.userid;
-  console.log("Bet Line: ",betLine);
+  const userId = req.session.user?.userid;
+  const event_Id = parseInt (eventId)
+
+  console.log("Incoming bet data:", req.body);
+
+  if (!userId) {
+    console.error("User not logged in");
+    return res.status(401).send("Unauthorized");
+  }
+
+  if (!eventId || !amount || !sport || !betType || !betDetail || betLine === undefined) {
+    console.error("Missing required fields for bet:", req.body);
+    return res.status(400).send("Missing required fields");
+  }
+
   const int_betLine = parseInt(betLine, 10);
+  if (isNaN(int_betLine)) {
+    console.error("Invalid betLine value:", betLine);
+    return res.status(400).send("Invalid bet line");
+  }
+
   try {
-    
     await db.none(
-      `INSERT INTO Bets (UserID, EventID, Amount, Sport, BetType, BetDetail, BetLine) 
+      `INSERT INTO Bets (userid, eventid, amount, sport, bettype, betdetail, betline) 
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [userId, eventId, amount, sport, betType, betDetail, int_betLine]
     );
@@ -329,7 +348,8 @@ app.post('/bets', isAuthenticated, async (req, res) => {
 
     res.redirect('/profile');
   } catch (err) {
-    console.error(err);
+    console.error('Error placing bet:', err.message || err);
+    console.error(err.stack);
     res.status(500).send("Internal error placing bet.");
   }
 });
