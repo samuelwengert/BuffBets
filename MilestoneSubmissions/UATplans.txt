@@ -72,15 +72,6 @@ how much money from their base amount (for each user it is always 500)
 and once they have put that amount in the place bet button will take them
 back out, confirming the bet.
 
-This will prompt an error if the user does not input a valid bet amount
-which is between inclusively 5-100 dollars. 
-
-It will also prompt an error if the user does not input a bet amount at 
-all. 
-
-It will also prompt an error if the user makes a bet more than the amount
-they currently have in their balance.
-
 Test Data:
 We need the amount the user will bet (a value gathered from the front end),
 the balance of the user (inside the Users table and found via user id),
@@ -101,3 +92,38 @@ Testers:
 The testers for this will be the team building it which are all the people
 inside the github users
 
+____________________________________________________
+4: User places an invalid bet
+
+There are three cases where the user can prompt an error from the code
+when betting:
+
+This will prompt an error if the user does not input a valid bet amount
+which is between inclusively 5-100 dollars. 
+
+It will also prompt an error if the user does not input a bet amount at 
+all. 
+
+It will also prompt an error if the user makes a bet more than the amount
+they currently have in their balance.
+
+
+Test Data:
+We need the amount the user will bet (a value gathered from the front end),
+the balance of the user (inside the Users table and found via user id),
+And the user id.
+
+Test Environment:
+We will be using Mocha and Chai for our testing. Mocha is the code that 
+tests our set up and runs, chai is the code that verifies the tests either 
+were or weren't successful.
+
+Test Results:
+The way we test the results is seeing that the index file outputs a 
+200 value at the end of the code for a successful place of a bet,
+into the table and a 400 error for invalid amount, 401 for no bet,
+402 for placing a bet more than the user's balance.
+
+Testers:
+The testers for this will be the team building it which are all the people
+inside the github users
