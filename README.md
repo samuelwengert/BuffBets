@@ -44,5 +44,6 @@ WSL
 with these two an integration between docker and wsl needs to happen in order to have your system work properly
 
 
-Link to the deployed application: http://localhost:3000/home
+Link to the deployed application: (https://thewinners-3308.onrender.com)
+
 
