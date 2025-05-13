@@ -29,15 +29,20 @@ const hbs = handlebars.create({
 
 
 // database configuration
-const dbConfig = {
-  host: 'db', // the database server
-  port: 5432, // the database port
-  database: process.env.POSTGRES_DB, // the database name
-  user: process.env.POSTGRES_USER, // the user account to connect with
-  password: process.env.POSTGRES_PASSWORD, // the password of the user account
-};
 
+const isRender = process.env.DATABASE_URL !== undefined;
 
+const dbConfig = isRender
+  ? {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  } : {
+    host: 'db',
+    port: 5432,
+    database: process.env.POSTGRES_DB,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+  };
 
 const db = pgp(dbConfig);
 
@@ -511,5 +516,8 @@ app.get('/profile', isAuthenticated, async (req, res) => {
 // <!-- Section 5 : Start Server-->
 // *****************************************************
 // starting the server and keeping the connection open to listen for more requests
-module.exports = app.listen(3000);
-console.log('Server is listening on port 3000');
+
+const PORT = process.env.port || 3000;
+module.exports = app.listen(PORT, () => {
+  console.log(`Server is listening on port ${PORT}`);
+});
