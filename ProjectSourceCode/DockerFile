@@ -1,19 +1,16 @@
 # Use the official Node.js LTS image
 FROM node:lts
 
-# Set the working directory
-WORKDIR /app/ProjectSourceCode
+# Set the working directory inside the container
+WORKDIR /app
 
-# Copy package.json and package-lock.json (if exists)
-COPY package*.json ./
+# Copy only the contents of your subdirectory into the container
+COPY ProjectSourceCode/ ./
 
-# Install dependencies
+# Install dependencies from package.json (now in the container)
 RUN npm install
 
-# Copy the rest of the project files
-COPY . .
-
-# Expose the port your app uses (Render sets PORT, but this makes it clear)
+# Expose the port (Render uses this dynamically)
 EXPOSE 3000
 
 # Start the application
