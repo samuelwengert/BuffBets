@@ -517,7 +517,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
 // *****************************************************
 // starting the server and keeping the connection open to listen for more requests
 
-const PORT = process.env.port || 3000;
+const PORT = process.env.PORT || 3000;
 module.exports = app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
